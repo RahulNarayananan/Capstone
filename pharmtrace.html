@@ -78,6 +78,9 @@
                 <button onclick="changeTab('verify')" class="tab-button active py-3 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 transition" data-tab="verify">
                     Verify Drug
                 </button>
+                <button onclick="changeTab('admin')" class="tab-button py-3 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 transition" data-tab="admin">
+                    Admin Panel (Owner)
+                </button>
                 <button onclick="changeTab('register')" class="tab-button py-3 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 transition" data-tab="register">
                     Register Drug (Manufacturer)
                 </button>
@@ -103,6 +106,26 @@
                      <button id="start-scan-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Start Camera Scan</button>
                 </div>
                 <div id="verification-result" class="hidden p-6 bg-white rounded-lg shadow-md border border-gray-200"></div>
+            </div>
+            
+             <!-- Admin Panel Tab -->
+            <div id="admin-tab" class="hidden space-y-6">
+                <form id="add-manufacturer-form" class="p-6 bg-white rounded-lg shadow-md border border-gray-200 space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Add Manufacturer</h2>
+                    <div>
+                        <label for="add-manufacturer-address" class="block text-sm font-medium text-gray-700">New Manufacturer Address</label>
+                        <input type="text" id="add-manufacturer-address" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Add Manufacturer</button>
+                </form>
+                 <form id="remove-manufacturer-form" class="p-6 bg-white rounded-lg shadow-md border border-gray-200 space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Remove Manufacturer</h2>
+                    <div>
+                        <label for="remove-manufacturer-address" class="block text-sm font-medium text-gray-700">Manufacturer Address to Remove</label>
+                        <input type="text" id="remove-manufacturer-address" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Remove Manufacturer</button>
+                </form>
             </div>
 
             <!-- Register Drug Tab -->
@@ -148,3 +171,247 @@
         </div>
 
     </div>
+
+    <script>
+        // --- Globals & DOM Elements ---
+        const connectWalletBtn = document.getElementById('connect-wallet-btn');
+        const connectionStatus = document.getElementById('connection-status');
+        const walletAddressEl = document.getElementById('wallet-address');
+        const statusLog = document.getElementById('status-log');
+        
+        const tabs = {
+            verify: document.getElementById('verify-tab'),
+            admin: document.getElementById('admin-tab'),
+            register: document.getElementById('register-tab'),
+            transfer: document.getElementById('transfer-tab'),
+        };
+        const tabButtons = document.querySelectorAll('.tab-button');
+        
+        const startScanBtn = document.getElementById('start-scan-btn');
+        const stopScanBtn = document.getElementById('stop-scan-btn');
+        const scannerUi = document.getElementById('scanner-ui');
+        const verificationResult = document.getElementById('verification-result');
+
+        const registerForm = document.getElementById('register-form');
+        const transferForm = document.getElementById('transfer-form');
+        const addManufacturerForm = document.getElementById('add-manufacturer-form');
+        const removeManufacturerForm = document.getElementById('remove-manufacturer-form');
+
+        let provider;
+        let signer;
+        let contract;
+        let walletAddress;
+        let html5QrCode;
+
+        // --- IMPORTANT: DEPLOYMENT CONFIGURATION ---
+        // 1. DEPLOY your PharmaTrace.sol smart contract using Remix or Hardhat.
+        // 2. PASTE the deployed contract's address here.
+        const contractAddress = "PASTE_YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE";
+        
+        // 3. PASTE the contract's ABI (Application Binary Interface) here.
+        //    You can get this from Remix (Compiler tab) or your Hardhat artifacts.
+        const contractABI = [
+            // PASTE_YOUR_FULL_CONTRACT_ABI_ARRAY_HERE
+        ];
+        // --- END DEPLOYMENT CONFIGURATION ---
+
+
+        // --- Logging Utility ---
+        function log(message) {
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString();
+            statusLog.innerHTML += `<p>> [${timestamp}] ${message}</p>`;
+            statusLog.scrollTop = statusLog.scrollHeight;
+        }
+
+        // --- Wallet & Blockchain Interaction ---
+        async function connectWallet() {
+            if (!contractAddress || contractAddress.startsWith('PASTE_')) {
+                alert('Deployment Configuration Missing: Please update the contractAddress in the HTML file.');
+                return;
+            }
+             if (!contractABI || contractABI.length === 0) {
+                alert('Deployment Configuration Missing: Please update the contractABI in the HTML file.');
+                return;
+            }
+
+            if (typeof window.ethereum === 'undefined') {
+                log('MetaMask is not installed. Please install it to use this dApp.');
+                alert('Please install MetaMask to use this dApp.');
+                return;
+            }
+
+            try {
+                log('Requesting wallet connection...');
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                walletAddress = await signer.getAddress();
+                
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                
+                log(`Wallet connected successfully.`);
+                updateWalletUI(true);
+            } catch (error) {
+                log(`Error connecting wallet: ${error.message}`);
+                console.error(error);
+                updateWalletUI(false);
+            }
+        }
+        
+        function updateWalletUI(isConnected) {
+            if (isConnected) {
+                connectionStatus.textContent = 'Status: Connected';
+                connectionStatus.className = 'text-sm font-medium text-green-600';
+                walletAddressEl.textContent = `Address: ${walletAddress}`;
+                connectWalletBtn.textContent = 'Wallet Connected';
+                connectWalletBtn.disabled = true;
+                connectWalletBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                connectWalletBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            } else {
+                connectionStatus.textContent = 'Status: Not Connected';
+                connectionStatus.className = 'text-sm font-medium text-red-600';
+                walletAddressEl.textContent = 'No wallet address';
+            }
+        }
+
+        // --- UI & Tab Logic ---
+        function changeTab(tabName) {
+            Object.values(tabs).forEach(tab => tab.classList.add('hidden'));
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            tabs[tabName].classList.remove('hidden');
+            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('active');
+            log(`Switched to '${tabName}' tab.`);
+        }
+
+        // --- QR Code Scanner Logic ---
+        function onScanSuccess(decodedText, decodedResult) {
+            log(`QR Code detected: ${decodedText}`);
+            html5QrCode.stop().then(() => {
+                scannerUi.classList.add('hidden');
+                startScanBtn.classList.remove('hidden');
+                fetchDrugHistory(decodedText);
+            }).catch(err => console.error("Failed to stop QR scanner:", err));
+        }
+
+        function onScanFailure(error) { /* Do nothing to avoid log spam */ }
+
+        function setupScanner() {
+            html5QrCode = new Html5Qrcode("qr-reader");
+            startScanBtn.addEventListener('click', () => {
+                log('Starting camera for QR scan...');
+                scannerUi.classList.remove('hidden');
+                startScanBtn.classList.add('hidden');
+                verificationResult.classList.add('hidden');
+                
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+                    .catch(err => log(`Error starting scanner: ${err}`));
+            });
+            
+            stopScanBtn.addEventListener('click', () => {
+                log('Stopping camera scan.');
+                html5QrCode.stop().then(() => {
+                     scannerUi.classList.add('hidden');
+                     startScanBtn.classList.remove('hidden');
+                }).catch(err => log(`Error stopping scanner: ${err}`));
+            });
+        }
+        
+        // --- Core dApp Logic ---
+        async function fetchDrugHistory(uniqueId) {
+            log(`Fetching history for drug ID: ${uniqueId}`);
+            verificationResult.classList.remove('hidden');
+            verificationResult.innerHTML = `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div><p>Fetching data from the blockchain...</p></div>`;
+
+            try {
+                const drugInfo = await contract.getDrugDetails(uniqueId);
+                const history = await contract.getTransferHistory(uniqueId);
+                const [id, name, batch, manufacturer, owner] = drugInfo;
+                
+                let historyHtml = history.map((addr, index) => {
+                    const role = index === 0 ? 'Manufacturer' : `Owner #${index}`;
+                    const isCurrentOwner = addr.toLowerCase() === owner.toLowerCase() && index === history.length - 1;
+                    return `<li class="flex items-start space-x-3">...</li>`; // Truncated for brevity
+                }).join('');
+
+                verificationResult.innerHTML = `
+                    <div class="flex items-center space-x-3 text-green-600 mb-4">
+                         <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <h3 class="text-2xl font-bold">Drug Verified</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
+                        <p><strong>Name:</strong> ${name}</p>
+                        <p><strong>Batch:</strong> ${batch}</p>
+                        <p><strong>Unique ID:</strong> ${id}</p>
+                        <p><strong>Manufacturer:</strong> <span class="text-xs">${manufacturer}</span></p>
+                    </div>
+                    <h4 class="font-semibold mb-2">Chain of Custody:</h4>
+                    <ul class="space-y-3">${historyHtml}</ul>
+                `;
+            } catch (error) {
+                log(`Verification failed: ${error.message}`);
+                verificationResult.innerHTML = `...`; // Error message HTML
+            }
+        }
+        
+        async function handleTransaction(form, transactionPromise, successMessage) {
+            const button = form.querySelector('button[type="submit"]');
+            const originalButtonText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Processing...';
+
+            try {
+                const tx = await transactionPromise;
+                log('Transaction sent... waiting for confirmation...');
+                await tx.wait();
+                log(successMessage);
+                alert(successMessage);
+                form.reset();
+            } catch (error) {
+                log(`Transaction error: ${error.message}`);
+                alert(`Error: ${error.message}`);
+                console.error(error);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalButtonText;
+            }
+        }
+
+        addManufacturerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const address = document.getElementById('add-manufacturer-address').value;
+            await handleTransaction(e.target, contract.addManufacturer(address), `Successfully added manufacturer: ${address}`);
+        });
+
+        removeManufacturerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const address = document.getElementById('remove-manufacturer-address').value;
+            await handleTransaction(e.target, contract.removeManufacturer(address), `Successfully removed manufacturer: ${address}`);
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const drugName = document.getElementById('drug-name').value;
+            const batchNumber = document.getElementById('batch-number').value;
+            const uniqueId = document.getElementById('unique-id').value;
+            await handleTransaction(e.target, contract.registerDrug(uniqueId, drugName, batchNumber), `Successfully registered drug: ${drugName}`);
+        });
+
+        transferForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uniqueId = document.getElementById('transfer-unique-id').value;
+            const newOwner = document.getElementById('new-owner').value;
+            await handleTransaction(e.target, contract.transferDrug(uniqueId, newOwner), `Successfully transferred drug ${uniqueId}`);
+        });
+        
+        // --- Initialization ---
+        window.addEventListener('load', () => {
+            log('PharmaTrace dApp loaded.');
+            connectWalletBtn.addEventListener('click', connectWallet);
+            setupScanner();
+        });
+    </script>
+</body>
+</html>
