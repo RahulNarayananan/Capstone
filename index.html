@@ -212,20 +212,6 @@
         //    You can get this from Remix (Compiler tab) or your Hardhat artifacts.
         const contractABI = [
             // PASTE_YOUR_FULL_CONTRACT_ABI_ARRAY_HERE
-            [
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_account",
-				"type": "address"
-			}
-		],
-		"name": "addManufacturer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
 	{
 		"inputs": [],
 		"stateMutability": "nonpayable",
@@ -310,53 +296,12 @@
 	{
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_drugName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_batchNumber",
-				"type": "string"
-			}
-		],
-		"name": "registerDrug",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "address",
 				"name": "_account",
 				"type": "address"
 			}
 		],
-		"name": "removeManufacturer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "_newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferDrug",
+		"name": "addManufacturer",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -499,6 +444,60 @@
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_drugName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_batchNumber",
+				"type": "string"
+			}
+		],
+		"name": "registerDrug",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_account",
+				"type": "address"
+			}
+		],
+		"name": "removeManufacturer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferDrug",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "",
 				"type": "string"
 			},
@@ -519,7 +518,6 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
         ];
         // --- END DEPLOYMENT CONFIGURATION ---
 
