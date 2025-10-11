@@ -236,21 +236,8 @@
         let html5QrCode;
 
         // --- IMPORTANT: DEPLOYMENT CONFIGURATION ---
-        const contractAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";
+        const contractAddress = "0x763214A94eD047E04CfeC07B139edFDA3c76DD98";
         const contractABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_account",
-				"type": "address"
-			}
-		],
-		"name": "addManufacturer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
 	{
 		"inputs": [],
 		"stateMutability": "nonpayable",
@@ -335,53 +322,12 @@
 	{
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_drugName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_batchNumber",
-				"type": "string"
-			}
-		],
-		"name": "registerDrug",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "address",
 				"name": "_account",
 				"type": "address"
 			}
 		],
-		"name": "removeManufacturer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "_newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferDrug",
+		"name": "addManufacturer",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -529,6 +475,60 @@
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_drugName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_batchNumber",
+				"type": "string"
+			}
+		],
+		"name": "registerDrug",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_account",
+				"type": "address"
+			}
+		],
+		"name": "removeManufacturer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferDrug",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "",
 				"type": "string"
 			},
@@ -549,7 +549,7 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
+];
         // --- END DEPLOYMENT CONFIGURATION ---
 
 
