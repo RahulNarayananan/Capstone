@@ -218,7 +218,7 @@
         const stopScanBtn = document.getElementById('stop-scan-btn');
         const scannerUi = document.getElementById('scanner-ui');
         const verificationResult = document.getElementById('verification-result');
-        const verifyByIdForm = document.getElementById('verify-by-id-form'); // NEW
+        const verifyByIdForm = document.getElementById('verify-by-id-form');
 
         const registerForm = document.getElementById('register-form');
         const transferForm = document.getElementById('transfer-form');
@@ -236,7 +236,7 @@
         let html5QrCode;
 
         // --- IMPORTANT: DEPLOYMENT CONFIGURATION ---
-        const contractAddress = "0x9EA41197ce69CA8533fC9cd282C5fa016e419416";
+        const contractAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";
         const contractABI = [
 	{
 		"inputs": [
@@ -442,28 +442,33 @@
 		"outputs": [
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "uniqueId",
 				"type": "string"
 			},
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "drugName",
 				"type": "string"
 			},
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "batchNumber",
 				"type": "string"
 			},
 			{
 				"internalType": "address",
-				"name": "",
+				"name": "manufacturer",
 				"type": "address"
 			},
 			{
 				"internalType": "address",
-				"name": "",
+				"name": "currentOwner",
 				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "isRegistered",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -544,7 +549,7 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-];
+]
         // --- END DEPLOYMENT CONFIGURATION ---
 
 
@@ -668,11 +673,14 @@
             verificationResult.innerHTML = `<div class="flex items-center space-x-2"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div><p>Fetching data from the blockchain...</p></div>`;
 
             try {
+                // THIS IS THE CORRECTED PART
                 const drugInfo = await contract.getDrugDetails(uniqueId);
                 const history = await contract.getTransferHistory(uniqueId);
-                const [id, name, batch, manufacturer, currentOwner] = drugInfo;
                 
-                if (!drugInfo.isRegistered) {
+                // Correctly destructure the array returned by the smart contract
+                const [id, name, batch, manufacturer, currentOwner, isRegistered] = drugInfo;
+                
+                if (!isRegistered) { // Check the boolean flag from the returned data
                     throw new Error("Drug with this ID is not registered.");
                 }
                 
@@ -824,14 +832,13 @@
             }
         });
         
-        // NEW: Event listener for manual ID verification
         verifyByIdForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const uniqueIdInput = document.getElementById('verify-unique-id');
             const uniqueId = uniqueIdInput.value.trim();
             if (uniqueId) {
                 log(`Manually verifying ID: ${uniqueId}`);
-                verificationResult.classList.add('hidden'); // Hide previous results
+                verificationResult.classList.add('hidden'); 
                 fetchDrugHistory(uniqueId);
             } else {
                 alert('Please enter a Unique ID to verify.');
