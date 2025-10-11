@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -78,7 +79,7 @@
                 <button onclick="changeTab('verify')" class="tab-button active py-3 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 transition" data-tab="verify">
                     Verify Drug
                 </button>
-                <button onclick="changeTab('admin')" class="tab-button py-3 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 transition" data-tab="admin">
+                <button id="admin-tab-button" onclick="changeTab('admin')" class="tab-button hidden py-3 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 transition" data-tab="admin">
                     Admin Panel (Owner)
                 </button>
                 <button onclick="changeTab('register')" class="tab-button py-3 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 transition" data-tab="register">
@@ -94,16 +95,35 @@
             <!-- Verify Drug Tab -->
             <div id="verify-tab" class="space-y-6">
                 <div class="p-6 bg-white rounded-lg shadow-md border border-gray-200">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Drug QR Code</h2>
-                    <p class="text-sm text-gray-600 mb-4">Click the button below to start your camera and scan the unique QR code on the drug packaging. This will fetch its complete, tamper-proof history from the blockchain.</p>
-                    <div id="scanner-ui" class="hidden space-y-4">
-                        <div id="qr-reader-container" class="bg-gray-900">
-                            <div id="qr-reader"></div>
-                            <div class="scanner-line"></div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Verify Drug</h2>
+                    <!-- Option 1: Scan QR Code -->
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-600 mb-4">Scan the unique QR code on the drug packaging.</p>
+                        <div id="scanner-ui" class="hidden space-y-4">
+                            <div id="qr-reader-container" class="bg-gray-900">
+                                <div id="qr-reader"></div>
+                                <div class="scanner-line"></div>
+                            </div>
+                            <button id="stop-scan-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Stop Scanning</button>
                         </div>
-                        <button id="stop-scan-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Stop Scanning</button>
+                        <button id="start-scan-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Start Camera Scan</button>
                     </div>
-                     <button id="start-scan-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Start Camera Scan</button>
+
+                    <!-- Divider -->
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+                        <div class="flex-grow border-t border-gray-300"></div>
+                    </div>
+
+                    <!-- Option 2: Manual Entry -->
+                    <form id="verify-by-id-form" class="space-y-4 mt-4">
+                        <div>
+                            <label for="verify-unique-id" class="block text-sm font-medium text-gray-700">Enter Unique ID Manually</label>
+                            <input type="text" id="verify-unique-id" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., DRUG-XYZ-123" required>
+                        </div>
+                        <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Verify by ID</button>
+                    </form>
                 </div>
                 <div id="verification-result" class="hidden p-6 bg-white rounded-lg shadow-md border border-gray-200"></div>
             </div>
@@ -129,7 +149,7 @@
             </div>
 
             <!-- Register Drug Tab -->
-            <div id="register-tab" class="hidden">
+            <div id="register-tab" class="hidden space-y-6">
                  <form id="register-form" class="p-6 bg-white rounded-lg shadow-md border border-gray-200 space-y-4">
                     <h2 class="text-xl font-semibold text-gray-800">Register New Drug Batch</h2>
                     <div>
@@ -146,6 +166,12 @@
                     </div>
                     <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Register on Blockchain</button>
                 </form>
+                <div id="qr-code-result" class="hidden p-6 bg-white rounded-lg shadow-md border border-gray-200 text-center">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800">Registration Successful!</h3>
+                    <p class="text-sm text-gray-600 mb-4">Print or save this QR code and attach it to the drug packaging.</p>
+                    <div id="qrcode-container" class="flex justify-center mb-4" data-id=""></div>
+                    <button id="download-qr-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Download QR Code</button>
+                </div>
             </div>
 
             <!-- Transfer Ownership Tab -->
@@ -186,16 +212,22 @@
             transfer: document.getElementById('transfer-tab'),
         };
         const tabButtons = document.querySelectorAll('.tab-button');
+        const adminTabButton = document.getElementById('admin-tab-button');
         
         const startScanBtn = document.getElementById('start-scan-btn');
         const stopScanBtn = document.getElementById('stop-scan-btn');
         const scannerUi = document.getElementById('scanner-ui');
         const verificationResult = document.getElementById('verification-result');
+        const verifyByIdForm = document.getElementById('verify-by-id-form'); // NEW
 
         const registerForm = document.getElementById('register-form');
         const transferForm = document.getElementById('transfer-form');
         const addManufacturerForm = document.getElementById('add-manufacturer-form');
         const removeManufacturerForm = document.getElementById('remove-manufacturer-form');
+        
+        const qrCodeResult = document.getElementById('qr-code-result');
+        const qrcodeContainer = document.getElementById('qrcode-container');
+        const downloadQrBtn = document.getElementById('download-qr-btn');
 
         let provider;
         let signer;
@@ -204,321 +236,8 @@
         let html5QrCode;
 
         // --- IMPORTANT: DEPLOYMENT CONFIGURATION ---
-        // 1. DEPLOY your PharmaTrace.sol smart contract using Remix or Hardhat.
-        // 2. PASTE the deployed contract's address here.
-        const contractAddress = "0x9EA41197ce69CA8533fC9cd282C5fa016e419416";
-        
-        // 3. PASTE the contract's ABI (Application Binary Interface) here.
-        //    You can get this from Remix (Compiler tab) or your Hardhat artifacts.
-        const contractABI = [
-            // PASTE_YOUR_FULL_CONTRACT_ABI_ARRAY_HERE
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "string",
-				"name": "uniqueId",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "drugName",
-				"type": "string"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "manufacturer",
-				"type": "address"
-			}
-		],
-		"name": "DrugRegistered",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "string",
-				"name": "uniqueId",
-				"type": "string"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			}
-		],
-		"name": "DrugTransferred",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "ManufacturerAdded",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "ManufacturerRemoved",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_account",
-				"type": "address"
-			}
-		],
-		"name": "addManufacturer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"name": "drugs",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "uniqueId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "drugName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "batchNumber",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "manufacturer",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "currentOwner",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "isRegistered",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			}
-		],
-		"name": "getDrugDetails",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			}
-		],
-		"name": "getTransferHistory",
-		"outputs": [
-			{
-				"internalType": "address[]",
-				"name": "",
-				"type": "address[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "isManufacturer",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_drugName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_batchNumber",
-				"type": "string"
-			}
-		],
-		"name": "registerDrug",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_account",
-				"type": "address"
-			}
-		],
-		"name": "removeManufacturer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_uniqueId",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "_newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferDrug",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "transferHistory",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-        ];
+        const contractAddress = "PASTE_YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE";
+        const contractABI = [ /* PASTE_YOUR_FULL_CONTRACT_ABI_ARRAY_HERE */ ];
         // --- END DEPLOYMENT CONFIGURATION ---
 
 
@@ -557,15 +276,18 @@
                 contract = new ethers.Contract(contractAddress, contractABI, signer);
                 
                 log(`Wallet connected successfully.`);
-                updateWalletUI(true);
+                
+                const ownerAddress = await contract.owner();
+                updateWalletUI(true, ownerAddress);
+
             } catch (error) {
                 log(`Error connecting wallet: ${error.message}`);
                 console.error(error);
-                updateWalletUI(false);
+                updateWalletUI(false, null);
             }
         }
         
-        function updateWalletUI(isConnected) {
+        function updateWalletUI(isConnected, ownerAddress) {
             if (isConnected) {
                 connectionStatus.textContent = 'Status: Connected';
                 connectionStatus.className = 'text-sm font-medium text-green-600';
@@ -574,10 +296,17 @@
                 connectWalletBtn.disabled = true;
                 connectWalletBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                 connectWalletBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+
+                if (walletAddress.toLowerCase() === ownerAddress.toLowerCase()) {
+                    log('Owner wallet connected. Displaying Admin Panel.');
+                    adminTabButton.classList.remove('hidden');
+                }
+
             } else {
                 connectionStatus.textContent = 'Status: Not Connected';
                 connectionStatus.className = 'text-sm font-medium text-red-600';
                 walletAddressEl.textContent = 'No wallet address';
+                adminTabButton.classList.add('hidden'); // Hide on disconnect
             }
         }
 
@@ -634,12 +363,29 @@
             try {
                 const drugInfo = await contract.getDrugDetails(uniqueId);
                 const history = await contract.getTransferHistory(uniqueId);
-                const [id, name, batch, manufacturer, owner] = drugInfo;
+                const [id, name, batch, manufacturer, currentOwner] = drugInfo;
+                
+                if (!drugInfo.isRegistered) {
+                    throw new Error("Drug with this ID is not registered.");
+                }
                 
                 let historyHtml = history.map((addr, index) => {
-                    const role = index === 0 ? 'Manufacturer' : `Owner #${index}`;
-                    const isCurrentOwner = addr.toLowerCase() === owner.toLowerCase() && index === history.length - 1;
-                    return `<li class="flex items-start space-x-3">...</li>`; // Truncated for brevity
+                    const role = index === 0 ? 'Manufacturer' : `Owner #${index + 1}`;
+                    const isCurrentOwner = addr.toLowerCase() === currentOwner.toLowerCase();
+                    const badgeClass = isCurrentOwner ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
+                    const badgeText = isCurrentOwner ? 'Current Owner' : '';
+                    
+                    return `
+                        <li class="flex items-center justify-between p-3 rounded-md transition hover:bg-gray-50">
+                            <div class="flex items-center">
+                                <span class="flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 text-sm font-bold mr-3">${index + 1}</span>
+                                <div>
+                                    <p class="font-semibold text-gray-700">${role}</p>
+                                    <p class="text-xs text-gray-500 font-mono">${addr}</p>
+                                </div>
+                            </div>
+                            ${badgeText ? `<span class="text-xs font-semibold px-2 py-1 rounded-full ${badgeClass}">${badgeText}</span>` : ''}
+                        </li>`;
                 }).join('');
 
                 verificationResult.innerHTML = `
@@ -647,18 +393,24 @@
                          <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <h3 class="text-2xl font-bold">Drug Verified</h3>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6 bg-gray-50 p-4 rounded-lg">
                         <p><strong>Name:</strong> ${name}</p>
                         <p><strong>Batch:</strong> ${batch}</p>
-                        <p><strong>Unique ID:</strong> ${id}</p>
-                        <p><strong>Manufacturer:</strong> <span class="text-xs">${manufacturer}</span></p>
+                        <p class="md:col-span-2"><strong>Unique ID:</strong> ${id}</p>
                     </div>
-                    <h4 class="font-semibold mb-2">Chain of Custody:</h4>
-                    <ul class="space-y-3">${historyHtml}</ul>
+                    <h4 class="font-semibold mb-3 text-lg">Chain of Custody:</h4>
+                    <ul class="space-y-2">${historyHtml}</ul>
                 `;
             } catch (error) {
                 log(`Verification failed: ${error.message}`);
-                verificationResult.innerHTML = `...`; // Error message HTML
+                verificationResult.innerHTML = `
+                    <div class="flex items-center space-x-3 text-red-600">
+                        <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>
+                        <h3 class="text-2xl font-bold">Verification Failed</h3>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">This drug's unique ID was not found on the blockchain. It may be counterfeit or unregistered.</p>
+                    <p class="mt-1 text-xs text-red-700 font-mono">Error: ${error.reason || error.message}</p>
+                `;
             }
         }
         
@@ -676,8 +428,9 @@
                 alert(successMessage);
                 form.reset();
             } catch (error) {
-                log(`Transaction error: ${error.message}`);
-                alert(`Error: ${error.message}`);
+                const reason = error.reason || "An unknown error occurred.";
+                log(`Transaction error: ${reason}`);
+                alert(`Error: ${reason}`);
                 console.error(error);
             } finally {
                 button.disabled = false;
@@ -702,7 +455,41 @@
             const drugName = document.getElementById('drug-name').value;
             const batchNumber = document.getElementById('batch-number').value;
             const uniqueId = document.getElementById('unique-id').value;
-            await handleTransaction(e.target, contract.registerDrug(uniqueId, drugName, batchNumber), `Successfully registered drug: ${drugName}`);
+
+            qrCodeResult.classList.add('hidden'); 
+
+            const button = e.target.querySelector('button[type="submit"]');
+            const originalButtonText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Processing...';
+
+            try {
+                const tx = await contract.registerDrug(uniqueId, drugName, batchNumber);
+                log('Transaction sent... waiting for confirmation...');
+                await tx.wait();
+                const successMessage = `Successfully registered drug: ${drugName}`;
+                log(successMessage);
+                alert(successMessage);
+
+                qrcodeContainer.innerHTML = '';
+                qrcodeContainer.dataset.id = uniqueId;
+                QRCode.toCanvas(document.createElement('canvas'), uniqueId, { width: 220, margin: 1 }, function (error, canvas) {
+                    if (error) throw error;
+                    qrcodeContainer.appendChild(canvas);
+                    qrCodeResult.classList.remove('hidden');
+                    log(`Generated QR code for ID: ${uniqueId}`);
+                });
+                
+                e.target.reset();
+            } catch (error) {
+                const reason = error.reason || "An unknown error occurred.";
+                log(`Transaction error: ${reason}`);
+                alert(`Error: ${reason}`);
+                console.error(error);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalButtonText;
+            }
         });
 
         transferForm.addEventListener('submit', async (e) => {
@@ -712,6 +499,38 @@
             await handleTransaction(e.target, contract.transferDrug(uniqueId, newOwner), `Successfully transferred drug ${uniqueId}`);
         });
         
+        downloadQrBtn.addEventListener('click', () => {
+            const canvas = qrcodeContainer.querySelector('canvas');
+            const uniqueId = qrcodeContainer.dataset.id;
+            if (canvas && uniqueId) {
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `PharmaTrace-QR-${uniqueId}.png`;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                log(`Downloading QR code for ID: ${uniqueId}`);
+            } else {
+                log('Error: Could not find QR code or ID to download.');
+                alert('Could not find QR code to download.');
+            }
+        });
+        
+        // NEW: Event listener for manual ID verification
+        verifyByIdForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const uniqueIdInput = document.getElementById('verify-unique-id');
+            const uniqueId = uniqueIdInput.value.trim();
+            if (uniqueId) {
+                log(`Manually verifying ID: ${uniqueId}`);
+                verificationResult.classList.add('hidden'); // Hide previous results
+                fetchDrugHistory(uniqueId);
+            } else {
+                alert('Please enter a Unique ID to verify.');
+            }
+        });
+
         // --- Initialization ---
         window.addEventListener('load', () => {
             log('PharmaTrace dApp loaded.');
@@ -721,3 +540,4 @@
     </script>
 </body>
 </html>
+
