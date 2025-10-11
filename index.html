@@ -236,8 +236,148 @@
         let html5QrCode;
 
         // --- IMPORTANT: DEPLOYMENT CONFIGURATION ---
-        const contractAddress = "PASTE_YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE";
-        const contractABI = [ /* PASTE_YOUR_FULL_CONTRACT_ABI_ARRAY_HERE */ ];
+        const contractAddress = "0x9EA41197ce69CA8533fC9cd282C5fa016e419416";
+        const contractABI =             [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_account",
+				"type": "address"
+			}
+		],
+		"name": "addManufacturer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+{
+"inputs": [],
+"stateMutability": "nonpayable",
+@@ -307,29 +293,6 @@ <h2 class="text-xl font-semibold text-gray-800">Transfer Drug Ownership</h2>
+"name": "ManufacturerRemoved",
+"type": "event"
+},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_drugName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_batchNumber",
+				"type": "string"
+			}
+		],
+		"name": "registerDrug",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+{
+"inputs": [
+{
+@@ -338,25 +301,7 @@ <h2 class="text-xl font-semibold text-gray-800">Transfer Drug Ownership</h2>
+"type": "address"
+}
+],
+		"name": "removeManufacturer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferDrug",
+		"name": "addManufacturer",
+"outputs": [],
+"stateMutability": "nonpayable",
+"type": "function"
+@@ -495,6 +440,60 @@ <h2 class="text-xl font-semibold text-gray-800">Transfer Drug Ownership</h2>
+"stateMutability": "view",
+"type": "function"
+},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_drugName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_batchNumber",
+				"type": "string"
+			}
+		],
+		"name": "registerDrug",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_account",
+				"type": "address"
+			}
+		],
+		"name": "removeManufacturer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_uniqueId",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferDrug",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+{
+"inputs": [
+{
+@@ -519,7 +518,6 @@ <h2 class="text-xl font-semibold text-gray-800">Transfer Drug Ownership</h2>
+"stateMutability": "view",
+"type": "function"
+}
+]
+];
         // --- END DEPLOYMENT CONFIGURATION ---
 
 
